@@ -1,4 +1,12 @@
 .*
 !.gitignore
+!.mvn/
+!.mvn/wrapper/
+!.mvn/wrapper/maven-wrapper.properties
+!.github/
+!.github/workflows/
+!.github/ISSUE_TEMPLATE/
 target/
 *.iml
+.mvn/wrapper/maven-wrapper.jar
+pom.xml.versionsBackup

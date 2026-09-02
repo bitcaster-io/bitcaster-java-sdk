@@ -130,7 +130,7 @@ public class BitcasterClient {
     }
 
     private <T> T get(String path, ParameterizedTypeReference<T> type) {
-        return request(() -> restClient.get().uri(path).retrieve().body(type));
+        return request(() -> restClient.get().uri(URI.create(baseUrl + path)).retrieve().body(type));
     }
 
     private <T> T getAbsolute(String uri, ParameterizedTypeReference<T> type) {
@@ -138,11 +138,11 @@ public class BitcasterClient {
     }
 
     private <T> T post(String path, Object body, ParameterizedTypeReference<T> type) {
-        return request(() -> restClient.post().uri(path).body(body).retrieve().body(type));
+        return request(() -> restClient.post().uri(URI.create(baseUrl + path)).body(body).retrieve().body(type));
     }
 
     private <T> T patch(String path, Object body, ParameterizedTypeReference<T> type) {
-        return request(() -> restClient.patch().uri(path).body(body).retrieve().body(type));
+        return request(() -> restClient.patch().uri(URI.create(baseUrl + path)).body(body).retrieve().body(type));
     }
 
     private <T> T request(java.util.function.Supplier<T> action) {
@@ -160,7 +160,19 @@ public class BitcasterClient {
     }
 
     private static String path(String value) {
-        return UriUtils.encodePathSegment(requireText(value, "value"), StandardCharsets.UTF_8);
+        byte[] bytes = requireText(value, "value").getBytes(StandardCharsets.UTF_8);
+        StringBuilder encoded = new StringBuilder(bytes.length);
+        for (byte current : bytes) {
+            int unsigned = current & 0xff;
+            if ((unsigned >= 'a' && unsigned <= 'z') || (unsigned >= 'A' && unsigned <= 'Z')
+                    || (unsigned >= '0' && unsigned <= '9') || unsigned == '-' || unsigned == '.'
+                    || unsigned == '_' || unsigned == '~') {
+                encoded.append((char) unsigned);
+            } else {
+                encoded.append("%%%02X".formatted(unsigned));
+            }
+        }
+        return encoded.toString();
     }
 
     private static String empty(String value) {
