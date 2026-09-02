@@ -61,3 +61,5 @@ Enable the optional JaCoCo coverage profile:
 ```
 
 The HTML coverage report is generated at `target/site/jacoco/index.html`.
+The coverage profile enforces at least 80% branch coverage; a failed check blocks
+the build and should be resolved before a major release.

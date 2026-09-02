@@ -59,6 +59,17 @@ class BitcasterClientTest {
     void rejectsMalformedEndpoint() {
         assertThrows(BitcasterConfigurationException.class,
                 () -> new BitcasterClient("https://example.com/api/v1/"));
+        assertThrows(BitcasterConfigurationException.class, () -> new BitcasterClient(null));
+        assertThrows(BitcasterConfigurationException.class, () -> new BitcasterClient("not-an-endpoint"));
+        assertThrows(BitcasterConfigurationException.class, () -> new BitcasterClient("https://example.com/api/o/org/"));
+        assertThrows(BitcasterConfigurationException.class, () -> new BitcasterClient("ftp://token@example.com/api/o/org/"));
+        assertThrows(BitcasterConfigurationException.class, () -> new BitcasterClient("https://%"));
+    }
+
+    @Test
+    void validatesDomainAndPathArguments() {
+        assertThrows(BitcasterConfigurationException.class, () -> client.setDomain("", "application"));
+        assertThrows(BitcasterConfigurationException.class, () -> client.setDomain("project", null));
     }
 
         @Test
@@ -110,6 +121,28 @@ class BitcasterClientTest {
         server.verify();
         }
 
+    @Test
+    void triggersEventWithoutCorrelationIdAndWithOptions() {
+        client.setDomain("project", "application");
+        server.expect(requestTo("https://bitcaster.example.com/api/o/demo-org/p/project/a/application/e/signup/trigger/"))
+                .andExpect(method(POST))
+                .andExpect(jsonPath("$.context.user", equalTo("u1")))
+                .andExpect(jsonPath("$.options.priority", equalTo("high")))
+                .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+
+        client.triggerEvent("signup", Map.of("user", "u1"), Map.of("priority", "high"), " ");
+        server.verify();
+    }
+
+    @Test
+    void encodesAllUnreservedAndReservedPathCharacters() {
+        server.expect(requestTo("https://bitcaster.example.com/api/o/demo-org/p/p-._~1/a/app/e/"))
+                .andExpect(method(GET)).andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+
+        client.listEvents("p-._~1", "app");
+        server.verify();
+    }
+
         @Test
         void writesUserPayloadsAndDefaults() {
         server.expect(requestTo("https://bitcaster.example.com/api/o/demo-org/u/"))
@@ -139,6 +172,56 @@ class BitcasterClientTest {
         assertEquals(1, client.unregisterUser("project", "application", "user one").get("deleted"));
         server.verify();
         }
+
+        @Test
+        void usesOptionalDefaultsWhenArgumentsAreNull() {
+        server.expect(requestTo("https://bitcaster.example.com/api/o/demo-org/u/user%40example.com/"))
+            .andExpect(method(PATCH)).andExpect(jsonPath("$._mode", equalTo("ignore")))
+            .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+        server.expect(requestTo("https://bitcaster.example.com/api/o/demo-org/p/project/a/application/register/"))
+            .andExpect(method(POST)).andExpect(jsonPath("$.custom_fields").isMap())
+            .andExpect(jsonPath("$.addresses").isArray())
+            .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+
+        client.updateUser("user@example.com", "", "", null, null);
+        client.registerUser("project", "application", "user", "", "", "", null,
+            true, null, null);
+        server.verify();
+        }
+
+        @Test
+        void asyncFacadeExposesAllResourceOperations() {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            server.expect(requestTo("https://bitcaster.example.com/api/o/demo-org/p/project/a/application/e/"))
+                .andExpect(method(GET)).andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+            server.expect(requestTo("https://bitcaster.example.com/api/o/demo-org/p/project/d/"))
+                .andExpect(method(GET)).andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+            server.expect(requestTo("https://bitcaster.example.com/api/o/demo-org/p/"))
+                .andExpect(method(GET)).andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+            server.expect(requestTo("https://bitcaster.example.com/api/o/demo-org/p/project/a/"))
+                .andExpect(method(GET)).andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+            server.expect(requestTo("https://bitcaster.example.com/api/o/demo-org/p/project/d/list/m/"))
+                .andExpect(method(GET)).andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+            AsyncBitcasterClient async = new AsyncBitcasterClient(client, executor);
+
+            assertEquals(0, async.listEvents("project", "application").join().size());
+            assertEquals(0, async.listDistributionLists("project").join().size());
+            assertEquals(0, async.listProjects().join().size());
+            assertEquals(0, async.listApplications("project").join().size());
+            assertEquals(0, async.listMembers("project", "list").join().size());
+            async.close();
+            server.verify();
+        } finally {
+            executor.shutdownNow();
+        }
+        }
+
+    @Test
+    void asyncClientOwnsAndClosesItsDefaultExecutor() {
+        AsyncBitcasterClient async = new AsyncBitcasterClient(BAE);
+        async.close();
+    }
 
         @Test
         void mapsBadRequestsToTypedException() {
