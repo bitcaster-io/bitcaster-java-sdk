@@ -13,7 +13,7 @@
 
     <groupId>io.bitcaster</groupId>
     <artifactId>bitcaster-java-sdk</artifactId>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
     <name>Bitcaster Java SDK</name>
     <description>Java client for the Bitcaster event notification platform</description>
 
