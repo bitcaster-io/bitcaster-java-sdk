@@ -3,7 +3,7 @@
 [![GitHub Release](https://img.shields.io/github/v/release/bitcaster-io/bitcaster-java-sdk)](https://github.com/bitcaster-io/bitcaster-java-sdk/releases/latest)
 [![CI](https://github.com/bitcaster-io/bitcaster-java-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/bitcaster-io/bitcaster-java-sdk/actions/workflows/ci.yml)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/14424/badge)](https://www.bestpractices.dev/projects/14424)
-[![CodeQL](https://github.com/bitcaster-io/bitcaster-java-sdk/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/bitcaster-io/bitcaster-java-sdk/actions/workflows/github-code-scanning/codeql)
+[![CodeQL](https://github.com/bitcaster-io/bitcaster-java-sdk/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/bitcaster-io/bitcaster-java-sdk/actions/workflows/github-code-scanning/codeql)J
 
 Spring-friendly Java client for the Bitcaster REST API. Java 17 and Spring Boot 3.5 are supported.
 
