@@ -29,7 +29,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up Python
-        uses: actions/setup-python@751276eafca55f10f252026015f43c488f2322ba # main
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # main
         with:
           python-version: '3.x'
       - name: Install documentation tools
@@ -37,7 +37,7 @@ jobs:
       - name: Build documentation
         run: mkdocs build --strict
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@98ef48e41587a300b82de4cf298aa98b57b2faae # v7.0.0
+        uses: actions/upload-pages-artifact@5f327015a708106f6f1b7c9a633901af30fe80cb # v7.0.0
         with:
           path: site
       - name: Deploy to GitHub Pages
